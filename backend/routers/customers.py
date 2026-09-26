@@ -5,10 +5,11 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from lib.auth import require_user
+from lib.auth import require_admin, require_user
 from lib.db import db
 from models.partner import Customer, CustomerCreate
 
+# Baca & tambah pelanggan: semua user login (kasir perlu saat checkout tempo). Ubah/hapus: admin.
 router = APIRouter(prefix="/customers", tags=["customers"], dependencies=[Depends(require_user)])
 
 
@@ -29,7 +30,7 @@ async def create_customer(body: CustomerCreate):
     return customer
 
 
-@router.put("/{customer_id}", response_model=Customer)
+@router.put("/{customer_id}", response_model=Customer, dependencies=[Depends(require_admin)])
 async def update_customer(customer_id: str, body: CustomerCreate):
     doc = await db.customers.find_one({"id": customer_id}, {"_id": 0})
     if not doc:
@@ -40,7 +41,7 @@ async def update_customer(customer_id: str, body: CustomerCreate):
     return customer
 
 
-@router.delete("/{customer_id}")
+@router.delete("/{customer_id}", dependencies=[Depends(require_admin)])
 async def delete_customer(customer_id: str):
     result = await db.customers.delete_one({"id": customer_id})
     if result.deleted_count == 0:

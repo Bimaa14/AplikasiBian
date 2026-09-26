@@ -1,15 +1,21 @@
 """Session auth: httpOnly cookie + server-side session docs in Mongo. Frontend never sees a token."""
 
+import os
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from fastapi import HTTPException, Request, Response
+from fastapi import Depends, HTTPException, Request, Response
 from passlib.context import CryptContext
 
 from lib.db import db
 
 SESSION_COOKIE = "bengkel_session"
 SESSION_TTL = timedelta(days=7)
+# Cookie Secure flag: on by default; set COOKIE_SECURE=false only for plain-HTTP local dev.
+COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "true").lower() != "false"
+# Brute-force guard on /auth/login
+MAX_LOGIN_ATTEMPTS = 8
+LOGIN_WINDOW = timedelta(minutes=15)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -35,6 +41,7 @@ async def create_session(user_id: str, response: Response) -> None:
         key=SESSION_COOKIE,
         value=token,
         httponly=True,
+        secure=COOKIE_SECURE,
         samesite="lax",
         path="/",
         max_age=int(SESSION_TTL.total_seconds()),
@@ -68,3 +75,39 @@ async def require_user(request: Request) -> dict:
         raise HTTPException(status_code=401, detail="Pengguna tidak ditemukan")
     user.pop("password_hash", None)
     return user
+
+
+# --- Authorization (RBAC, single-tenant: dua tingkat hak akses admin & kasir) ---------------
+# Satu titik keputusan. Role SELALU dibaca ulang dari dokumen user (via require_user), bukan
+# dari cookie/body/query, sehingga role yang dicabut langsung berlaku pada request berikutnya.
+
+async def require_admin(user: dict = Depends(require_user)) -> dict:
+    """Hanya role 'admin'. Kasir mendapat 403 (boleh lihat menu, tidak boleh aksi ini)."""
+    if user.get("role") != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Akses ditolak — tindakan ini hanya untuk admin bengkel",
+        )
+    return user
+
+
+async def register_login_failure(username: str) -> None:
+    """Catat kegagalan login untuk rate limiting per username."""
+    await db.login_attempts.insert_one(
+        {"username": username, "at": datetime.now(timezone.utc)}
+    )
+
+
+async def clear_login_failures(username: str) -> None:
+    await db.login_attempts.delete_many({"username": username})
+
+
+async def assert_login_allowed(username: str) -> None:
+    """Tolak sementara bila terlalu banyak percobaan login gagal dalam LOGIN_WINDOW."""
+    since = datetime.now(timezone.utc) - LOGIN_WINDOW
+    recent = await db.login_attempts.count_documents({"username": username, "at": {"$gte": since}})
+    if recent >= MAX_LOGIN_ATTEMPTS:
+        raise HTTPException(
+            status_code=429,
+            detail="Terlalu banyak percobaan login gagal. Coba lagi dalam beberapa menit.",
+        )

@@ -5,10 +5,11 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from lib.auth import require_user
+from lib.auth import require_admin, require_user
 from lib.db import db
 from models.product import Product, ProductCreate, ProductUpdate
 
+# Baca produk: semua user login (kasir butuh untuk POS). Tulis/hapus: admin saja.
 router = APIRouter(prefix="/products", tags=["products"], dependencies=[Depends(require_user)])
 
 
@@ -24,7 +25,7 @@ async def list_products(search: Optional[str] = None, type: Optional[str] = None
     return [Product(**d) for d in docs]
 
 
-@router.post("", response_model=Product, status_code=201)
+@router.post("", response_model=Product, status_code=201, dependencies=[Depends(require_admin)])
 async def create_product(body: ProductCreate):
     product = Product(**body.model_dump())
     await db.products.insert_one(product.model_dump())
@@ -39,7 +40,7 @@ async def get_product(product_id: str):
     return Product(**doc)
 
 
-@router.put("/{product_id}", response_model=Product)
+@router.put("/{product_id}", response_model=Product, dependencies=[Depends(require_admin)])
 async def update_product(product_id: str, body: ProductUpdate):
     doc = await db.products.find_one({"id": product_id}, {"_id": 0})
     if not doc:
@@ -52,7 +53,7 @@ async def update_product(product_id: str, body: ProductUpdate):
     return product
 
 
-@router.delete("/{product_id}")
+@router.delete("/{product_id}", dependencies=[Depends(require_admin)])
 async def delete_product(product_id: str):
     result = await db.products.delete_one({"id": product_id})
     if result.deleted_count == 0:

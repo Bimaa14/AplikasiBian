@@ -28,7 +28,13 @@ async def lifespan(app: FastAPI):
 
 
 # Create the main app without a prefix
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    # Skema/dokumentasi API tidak diekspos di produksi (set ENABLE_API_DOCS=true untuk dev).
+    docs_url="/docs" if os.environ.get("ENABLE_API_DOCS", "false").lower() == "true" else None,
+    redoc_url=None,
+    openapi_url="/openapi.json" if os.environ.get("ENABLE_API_DOCS", "false").lower() == "true" else None,
+)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -47,18 +53,6 @@ class StatusCheckCreate(BaseModel):
 @api_router.get("/")
 async def root():
     return {"message": "Hello World"}
-
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.model_dump())
-    return status_obj
-
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
 
 # Mount resource routers (each exports its own APIRouter, all under /api)
 from routers import (auth, customers, dashboard, expenses, laravel_bundle,
