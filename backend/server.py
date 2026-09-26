@@ -62,7 +62,8 @@ async def get_status_checks():
 
 # Mount resource routers (each exports its own APIRouter, all under /api)
 from routers import (auth, customers, dashboard, expenses, laravel_bundle,
-                     payables, products, receivables, suppliers, transactions)
+                     payables, products, receivables, reports, stock_in,
+                     suppliers, transactions, vehicles)
 
 api_router.include_router(auth.router)
 api_router.include_router(products.router)
@@ -73,6 +74,9 @@ api_router.include_router(receivables.router)
 api_router.include_router(payables.router)
 api_router.include_router(expenses.router)
 api_router.include_router(dashboard.router)
+api_router.include_router(stock_in.router)
+api_router.include_router(vehicles.router)
+api_router.include_router(reports.router)
 api_router.include_router(laravel_bundle.router)
 
 # Include the router in the main app

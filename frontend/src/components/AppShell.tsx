@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { NavLink, Navigate, Outlet } from "react-router-dom";
 import {
+  Car,
   FileCode2,
+  FileSpreadsheet,
   HandCoins,
   LayoutDashboard,
   LogOut,
   Menu,
   Package,
+  PackagePlus,
   ReceiptText,
   ShoppingCart,
   Truck,
@@ -27,11 +30,14 @@ const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, testid: "nav-dashboard" },
   { to: "/pos", label: "Kasir POS", icon: ShoppingCart, testid: "nav-pos" },
   { to: "/transaksi", label: "Transaksi", icon: ReceiptText, testid: "nav-transactions" },
+  { to: "/kendaraan", label: "Riwayat Kendaraan", icon: Car, testid: "nav-vehicles" },
   { to: "/produk", label: "Produk", icon: Package, testid: "nav-products" },
+  { to: "/stok-masuk", label: "Stok Masuk", icon: PackagePlus, testid: "nav-stock-in" },
   { to: "/pelanggan", label: "Pelanggan", icon: Users, testid: "nav-customers" },
   { to: "/distributor", label: "Distributor", icon: Truck, testid: "nav-suppliers" },
   { to: "/piutang-hutang", label: "Piutang & Hutang", icon: HandCoins, testid: "nav-debts" },
   { to: "/pengeluaran", label: "Pengeluaran", icon: Wallet, testid: "nav-expenses" },
+  { to: "/laporan", label: "Laporan Bulanan", icon: FileSpreadsheet, testid: "nav-reports" },
   { to: "/laravel", label: "Kode Laravel", icon: FileCode2, testid: "nav-laravel" },
 ];
 

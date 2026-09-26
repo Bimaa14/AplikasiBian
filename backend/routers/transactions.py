@@ -51,7 +51,7 @@ async def list_transactions(search: Optional[str] = None, status: Optional[str] 
     query: dict = {}
     if search:
         rx = {"$regex": re.escape(search), "$options": "i"}
-        query["$or"] = [{"invoice_number": rx}, {"customer_name": rx}]
+        query["$or"] = [{"invoice_number": rx}, {"customer_name": rx}, {"vehicle_plate": rx}]
     if status in ("completed", "returned"):
         query["status"] = status
     docs = await db.transactions.find(query, {"_id": 0}).sort("date", -1).to_list(100)
@@ -138,6 +138,7 @@ async def create_transaction(body: TransactionCreate, user: dict = Depends(requi
         service_fee=service_fee,
         total_profit=total_profit,
         due_date=body.due_date.isoformat() if body.due_date else None,
+        vehicle_plate=(body.vehicle_plate or "").strip().upper() or None,
     )
 
     # sequential invoice number per day, retry on the unique index

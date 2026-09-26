@@ -10,6 +10,9 @@ import CustomersPage from "@/pages/CustomersPage";
 import SuppliersPage from "@/pages/SuppliersPage";
 import DebtPage from "@/pages/DebtPage";
 import ExpensesPage from "@/pages/ExpensesPage";
+import StockInPage from "@/pages/StockInPage";
+import VehiclesPage from "@/pages/VehiclesPage";
+import ReportsPage from "@/pages/ReportsPage";
 import LaravelBundlePage from "@/pages/LaravelBundlePage";
 
 // One <Route> per page in src/pages; BrowserRouter already wraps this in main.tsx.
@@ -26,6 +29,9 @@ export default function App() {
           <Route path="/pelanggan" element={<CustomersPage />} />
           <Route path="/distributor" element={<SuppliersPage />} />
           <Route path="/piutang-hutang" element={<DebtPage />} />
+          <Route path="/stok-masuk" element={<StockInPage />} />
+          <Route path="/kendaraan" element={<VehiclesPage />} />
+          <Route path="/laporan" element={<ReportsPage />} />
           <Route path="/pengeluaran" element={<ExpensesPage />} />
           <Route path="/laravel" element={<LaravelBundlePage />} />
         </Route>

@@ -32,7 +32,8 @@ export default function TransactionsPage() {
       if (!term) return true;
       return (
         t.invoice_number.toLowerCase().includes(term) ||
-        (t.customer_name ?? "").toLowerCase().includes(term)
+        (t.customer_name ?? "").toLowerCase().includes(term) ||
+        (t.vehicle_plate ?? "").toLowerCase().includes(term)
       );
     });
   }, [txQuery.data, search, statusFilter]);
@@ -62,7 +63,7 @@ export default function TransactionsPage() {
             data-testid="transactions-search-input"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari invoice / pelanggan…"
+            placeholder="Cari invoice / pelanggan / nopol…"
             className="w-56"
           />
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as TxStatus | "semua")}>
@@ -92,6 +93,7 @@ export default function TransactionsPage() {
                 <TableHead>Invoice</TableHead>
                 <TableHead>Waktu</TableHead>
                 <TableHead>Pelanggan</TableHead>
+                <TableHead>Nopol</TableHead>
                 <TableHead>Metode</TableHead>
                 <TableHead>Jatuh Tempo</TableHead>
                 <TableHead className="text-right">Total</TableHead>
@@ -105,6 +107,7 @@ export default function TransactionsPage() {
                   <TableCell className="font-mono text-xs">{t.invoice_number}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{formatDateTime(t.date)}</TableCell>
                   <TableCell className="max-w-40 truncate text-sm">{t.customer_name ?? "Umum"}</TableCell>
+                  <TableCell className="font-mono text-xs tracking-wider">{t.vehicle_plate ?? "-"}</TableCell>
                   <TableCell><PaymentMethodBadge method={t.payment_method} /></TableCell>
                   <TableCell className="text-xs">
                     {t.payment_method === "credit" && t.due_date ? (

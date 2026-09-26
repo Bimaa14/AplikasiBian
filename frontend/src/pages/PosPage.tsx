@@ -23,6 +23,7 @@ type CheckoutBody = {
   payment_method: PaymentMethod;
   customer_id: string | null;
   due_date: string | null;
+  vehicle_plate: string | null;
 };
 
 const TABS: { key: TabKey; label: string }[] = [
@@ -40,6 +41,7 @@ export default function PosPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [customerId, setCustomerId] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [vehiclePlate, setVehiclePlate] = useState("");
   const [receipt, setReceipt] = useState<Transaction | null>(null);
   const [receiptOpen, setReceiptOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -124,6 +126,7 @@ export default function PosPage() {
       setPaymentMethod("cash");
       setCustomerId("");
       setDueDate("");
+      setVehiclePlate("");
       void queryClient.invalidateQueries({ queryKey: ["products"] });
       void queryClient.invalidateQueries({ queryKey: ["transactions"] });
       void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
@@ -141,6 +144,7 @@ export default function PosPage() {
       payment_method: paymentMethod,
       customer_id: customerId || null,
       due_date: paymentMethod === "credit" ? dueDate : null,
+      vehicle_plate: vehiclePlate.trim().toUpperCase() || null,
     });
   }
 
@@ -408,6 +412,20 @@ export default function PosPage() {
                 />
               </div>
             ) : null}
+            <div className="space-y-2">
+              <Label htmlFor="checkout-vehicle-plate">Nomor Polisi (opsional)</Label>
+              <Input
+                id="checkout-vehicle-plate"
+                data-testid="checkout-vehicle-plate-input"
+                className="font-mono uppercase"
+                value={vehiclePlate}
+                onChange={(e) => setVehiclePlate(e.target.value)}
+                placeholder="mis. B 1234 XYZ"
+              />
+              <p className="text-xs text-muted-foreground">
+                Diisi agar servis tercatat di Riwayat Kendaraan (ban &amp; oli terakhir).
+              </p>
+            </div>
             {creditMissing ? (
               <p className="text-xs text-red-400" data-testid="checkout-credit-warning">
                 Pembayaran tempo wajib memilih pelanggan dan tanggal jatuh tempo.

@@ -35,6 +35,12 @@ INDEXES: dict[str, list[IndexModel]] = {
         IndexModel([("invoice_number", ASCENDING)], name="invoice_unique", unique=True),
         IndexModel([("date_key", ASCENDING), ("date", DESCENDING)], name="date_key_date_desc"),
         IndexModel([("status", ASCENDING)], name="status"),
+        IndexModel([("vehicle_plate", ASCENDING), ("date", DESCENDING)], name="plate_date_desc"),
+    ],
+    "stock_in": [
+        IndexModel([("id", ASCENDING)], name="id_unique", unique=True),
+        IndexModel([("reference", ASCENDING)], name="reference_unique", unique=True),
+        IndexModel([("date_key", ASCENDING), ("date", DESCENDING)], name="date_key_date_desc"),
     ],
     "transaction_details": [
         IndexModel([("transaction_id", ASCENDING)], name="transaction_id"),

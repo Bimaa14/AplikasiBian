@@ -59,6 +59,11 @@ EXPENSES = [
     ("Lainnya", 85000, "Alat tulis dan nota kwitansi", 0),
 ]
 
+# nomor polisi contoh — dirotasi ke transaksi agar Riwayat Kendaraan terisi
+PLATES = [
+    "B 1234 XYZ", "B 5678 ABC", "D 9012 JKL", "B 3344 TRU", "F 7788 MNO",
+]
+
 # transaksi contoh: (hari_lalu, nama_pelanggan|None, metode, due_offset_hari|None, status, [(sku, qty)])
 TRANSACTIONS = [
     (5, "Budi Santoso", "cash", None, "completed", [("BAN-001", 2), ("OLI-002", 1)]),
@@ -123,6 +128,7 @@ def _build_tx(products_by_sku, customer, spec, counters):
         "total_profit": total_profit,
         "status": spec["status"],
         "due_date": (today_iso_date() + timedelta(days=spec["due_offset"])).isoformat() if spec["due_offset"] is not None else None,
+        "vehicle_plate": spec.get("plate"),
     }
     for d in details:
         d["transaction_id"] = tx["id"]
@@ -182,11 +188,12 @@ async def main():
 
     counters: dict = {}
     receivables = []
-    for spec in TRANSACTIONS:
+    for i, spec in enumerate(TRANSACTIONS):
         day, customer_name, method, due_offset, status, items = spec
         await commit(items, {
             "day": day, "customer_name": customer_name, "payment_method": method,
             "due_offset": due_offset, "status": status, "items": items,
+            "plate": PLATES[i % len(PLATES)],
         })
 
     # transaksi ritel harian (deterministik): 3 per hari selama 7 hari terakhir
@@ -213,6 +220,7 @@ async def main():
             "day": 6 - idx // 3, "customer_name": cust_name,
             "payment_method": method, "due_offset": 10 if method == "credit" else None,
             "status": "completed", "items": combo,
+            "plate": PLATES[idx % len(PLATES)] if idx % 3 != 2 else None,
         })
 
     if receivables:

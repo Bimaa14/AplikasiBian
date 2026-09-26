@@ -36,11 +36,28 @@ dari permintaan Laravel 11 + Filament v3 + Livewire v3 + MySQL. Kode referensi L
 - /products | /customers | /suppliers — CRUD
 - /transactions (POST checkout, GET riwayat) | /transactions/{id} | /transactions/{id}/return
 - /receivables (+ /{id}/pay) | /payables (POST catat + /{id}/pay) | /expenses (GET/POST/DELETE)
+- /stock-in (GET riwayat, POST catat barang masuk) — stok naik + cost_price produk diperbarui + hutang otomatis
+- /vehicles (daftar nopol + ringkasan) | /vehicles/{plate} (riwayat servis + ban/oli terakhir)
+- /reports/monthly (JSON) | /reports/monthly/csv | /reports/monthly/pdf (reportlab, unduhan)
 - /dashboard (agregasi keuangan) | /laravel-bundle (served from backend/laravel_reference/)
 
 ## Halaman frontend (React Router, layout AppShell sidebar)
-/login · / (dashboard) · /pos (kasir: F2 cari, F4 bayar) · /transaksi (riwayat+retur+cetak ulang) ·
-/produk · /pelanggan · /distributor · /piutang-hutang · /pengeluaran · /laravel (viewer+unduh kode)
+/login · / (dashboard) · /pos (kasir: F2 cari, F4 bayar, input nopol opsional) · /transaksi (riwayat+retur+cetak ulang, kolom nopol) ·
+/kendaraan (riwayat kendaraan per nopol) · /produk · /stok-masuk · /pelanggan · /distributor ·
+/piutang-hutang · /pengeluaran · /laporan (laba-rugi bulanan + unduh CSV/PDF) · /laravel (viewer+unduh kode)
+
+## Fitur tambahan (iterasi 2)
+- **Riwayat Kendaraan**: `vehicle_plate` (opsional, disimpan UPPERCASE) diisi kasir saat checkout → tampil di struk
+  thermal & kolom Nopol di Transaksi, dan bisa dicari. Halaman /kendaraan mengelompokkan transaksi `completed`
+  per plat: jumlah kunjungan, total belanja, pemilik terakhir, serta **ban terakhir** (produk barang bernama/SKU `BAN*`)
+  dan **oli terakhir** (`OLI*`) beserta tanggalnya — klasifikasi via regex di `routers/vehicles.py`.
+- **Stok Masuk**: satu form multi-item (`/stok-masuk`). Satu submit → stok setiap barang naik, `cost_price` produk
+  diperbarui ke harga beli terbaru, dan SATU baris `accounts_payable` dibuat otomatis (tersimpan di `stock_in.payable_id`).
+  Referensi `SM-YYMMDD-0001` (unik). Jasa ditolak (400) karena tidak punya stok.
+- **Laporan Bulanan**: `/laporan` menampilkan laba-rugi `?month=YYYY-MM` (pendapatan barang/jasa, HPP, laba kotor barang,
+  komisi montir, pengeluaran per kategori, laba bersih, jumlah transaksi/retur, piutang baru & lunas, nilai barang masuk,
+  5 produk terlaris). Unduhan **CSV** (`csv` module) dan **PDF** (reportlab/platypus, A4). Bulan tersedia dihitung dari
+  `date_key` transaksi + tanggal pengeluaran. Format bulan salah → 400.
 
 ## Seed
 `cd /app/backend && python seed.py` (idempotent — skip jika koleksi `users` tidak kosong):
@@ -49,9 +66,14 @@ dari permintaan Laravel 11 + Filament v3 + Livewire v3 + MySQL. Kode referensi L
 6 piutang (1 lewat jatuh tempo), 3 hutang (1 lewat tempo, 1 H-2), 4 pengeluaran skala mingguan.
 Reset penuh: drop koleksi lalu jalankan ulang `python seed.py`.
 
-## Catatan implementasi (jangan diulang sebagai bug)
-- `due_date` HARUS disimpan sebagai string `YYYY-MM-DD` murni. Jangan pakai `datetime.strptime(...).isoformat()`
+## Catatan implementasi (jangan diulang sebagai bug)- `due_date` HARUS disimpan sebagai string `YYYY-MM-DD` murni. Jangan pakai `datetime.strptime(...).isoformat()`
   (menghasilkan `...T00:00:00`) — gunakan `date.fromisoformat(today_iso())`. Tanggal ber-`T` pernah membuat
   `daysUntil()` di frontend mengembalikan 0 sehingga badge overdue salah tampil (kini `daysUntil` memakai `.slice(0,10)`).
 - Transaksi `credit` WAJIB punya `customer_id`; dokumen piutang tanpa customer_id membuat
   `GET /api/receivables` gagal validasi Pydantic (500). Generator seed menjaga aturan ini.
+- **PDF reportlab**: sel `Table` adalah string biasa (BUKAN `Paragraph`) — jangan tulis entity XML
+  seperti `&amp;` di dalamnya, karena akan tampil literal. Pakai `&` biasa. Entity XML hanya untuk `Paragraph`.
+- Laporan PDF harus muat 1 halaman: padding tabel 2.5pt, `h2.spaceBefore=7`, spacer footer 8pt.
+  Menaikkan nilai-nilai ini membuat footer terdorong ke halaman 2 yang kosong.
+- Verifikasi PDF wajib dirender jadi gambar (pymupdf, alat verifikasi saja — JANGAN masuk requirements.txt);
+  cek byte/`%PDF-` saja tidak menangkap teks ter-escape ganda atau halaman kosong.

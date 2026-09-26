@@ -16,6 +16,7 @@ class TransactionCreate(BaseModel):
     payment_method: Literal["cash", "credit"]
     customer_id: Optional[str] = None
     due_date: Optional[date] = None  # serialises to YYYY-MM-DD
+    vehicle_plate: Optional[str] = None  # nomor polisi (opsional) — untuk riwayat kendaraan
 
     @model_validator(mode="after")
     def credit_rule(self):
@@ -56,4 +57,5 @@ class Transaction(BaseModel):
     total_profit: float = 0
     status: Literal["completed", "returned"] = "completed"
     due_date: Optional[str] = None
+    vehicle_plate: Optional[str] = None  # nomor polisi kendaraan yang diservis
     details: List[TransactionDetail] = []

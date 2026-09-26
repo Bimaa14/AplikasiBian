@@ -67,6 +67,7 @@ export default function ThermalReceiptModal({
               <p>No&nbsp;&nbsp;: {transaction.invoice_number}</p>
               <p>Waktu: {formatDateTime(transaction.date)}</p>
               <p>Plg&nbsp;&nbsp;: {transaction.customer_name ?? "Umum"}</p>
+              {transaction.vehicle_plate ? <p>Nopol: {transaction.vehicle_plate}</p> : null}
             </div>
             <Dashed />
             <div className="space-y-1.5">
